@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenCircle</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1d2330; --muted: #6b7385; --border: #e3e6ec;
+    --accent: #3b5bdb; --accent-text: #ffffff; --user-bubble: #3b5bdb; --agent-bubble: #eef0f4;
+    --danger: #d6336c; --ok: #2f9e44; --warn: #e8590c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151c; --panel: #1a1e27; --text: #e6e8ee; --muted: #8b93a7; --border: #2a303d;
+      --accent: #5c7cfa; --accent-text: #ffffff; --user-bubble: #4263eb; --agent-bubble: #252b37;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; }
+  .tabs button { background: none; border: none; padding: 6px 12px; border-radius: 6px; color: var(--muted); cursor: pointer; font: inherit; }
+  .tabs button.active { background: var(--bg); color: var(--text); font-weight: 600; }
+  .spacer { flex: 1; }
+  .conn { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+  .dot.on { background: var(--ok); } .dot.off { background: var(--danger); }
+  header input { width: 200px; }
+  main { flex: 1; min-height: 0; display: flex; }
+  .view { display: none; flex: 1; min-height: 0; } .view.active { display: flex; }
+
+  input, select, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; width: 100%; }
+  textarea { resize: none; }
+  button.primary { background: var(--accent); color: var(--accent-text); border: none; border-radius: 6px; padding: 8px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  button.link { background: none; border: none; color: var(--danger); cursor: pointer; font: inherit; font-size: 12px; padding: 0; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+
+  /* setup */
+  #setup { gap: 16px; padding: 16px; overflow: auto; align-items: flex-start; flex-wrap: wrap; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; flex: 1 1 300px; min-width: 280px; }
+  .card h2 { font-size: 14px; margin: 0 0 4px; }
+  .card .hint { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+  .card form { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 6px; }
+  .card form button { margin-top: 10px; }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .list li:last-child { border-bottom: none; }
+  .list .sub { color: var(--muted); font-size: 12px; }
+  .empty { color: var(--muted); font-size: 12px; padding: 6px 0; }
+  .checks { max-height: 140px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; }
+  .checks label { display: flex; gap: 6px; align-items: center; color: var(--text); font-size: 13px; margin: 3px 0; }
+  .checks input { width: auto; }
+
+  /* chat */
+  #chat aside { width: 240px; background: var(--panel); border-right: 1px solid var(--border); overflow: auto; }
+  #chat aside h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 14px 14px 6px; }
+  .group-item { padding: 9px 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .group-item:hover { background: var(--bg); }
+  .group-item.active { background: var(--bg); font-weight: 600; }
+  .group-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .busy { font-size: 11px; color: var(--warn); }
+  .convo { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .convo-head { padding: 12px 18px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  .convo-head .title { font-weight: 600; }
+  .convo-head .members { color: var(--muted); font-size: 12px; }
+  #messages { flex: 1; overflow: auto; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 72%; display: flex; flex-direction: column; }
+  .msg .who { font-size: 12px; color: var(--muted); margin-bottom: 2px; display: flex; gap: 6px; align-items: center; }
+  .msg .bubble { padding: 9px 12px; border-radius: 12px; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.agent .bubble { background: var(--agent-bubble); border-top-left-radius: 4px; }
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.user .bubble { background: var(--user-bubble); color: #fff; border-top-right-radius: 4px; }
+  .avatar { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; }
+  .status { padding: 0 18px 6px; font-size: 12px; color: var(--warn); min-height: 20px; }
+  .composer { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); background: var(--panel); }
+  .placeholder { margin: auto; color: var(--muted); text-align: center; }
+
+  #toast { position: fixed; bottom: 16px; right: 16px; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: var(--danger); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .toast.ok { background: var(--ok); }
+
+  @media (max-width: 700px) {
+    #chat { flex-direction: column; }
+    #chat aside { width: 100%; max-height: 30vh; border-right: none; border-bottom: 1px solid var(--border); }
+    .msg { max-width: 90%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>⭕ OpenCircle</h1>
+  <nav class="tabs">
+    <button data-tab="chat" class="active">Chat</button>
+    <button data-tab="setup">Setup</button>
+  </nav>
+  <div class="spacer"></div>
+  <span class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></span>
+  <input id="api-url" title="Backend URL" />
+</header>
+
+<main>
+  <!-- CHAT -->
+  <section id="chat" class="view active">
+    <aside>
+      <h3>Groups</h3>
+      <div id="group-list"></div>
+    </aside>
+    <div class="convo">
+      <div id="convo-empty" class="placeholder">Pick a group on the left.<br/>No groups yet? Create one in <b>Setup</b>.</div>
+      <div id="convo" style="display:none; flex:1; flex-direction:column; min-height:0;">
+        <div class="convo-head"><div class="title" id="convo-title"></div><div class="members" id="convo-members"></div></div>
+        <div id="messages"></div>
+        <div class="status" id="convo-status"></div>
+        <form class="composer" id="composer">
+          <textarea id="composer-input" rows="2" placeholder="Message the group… (Enter to send, Shift+Enter for a new line)"></textarea>
+          <button class="primary" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="setup" class="view">
+    <div class="card">
+      <h2>1. Providers</h2>
+      <p class="hint">One row per API key. Add several Groq keys if you like.</p>
+      <ul class="list" id="provider-list"></ul>
+      <form id="provider-form">
+        <label>Name</label><input name="name" placeholder="groq-main" required />
+        <label>Provider</label>
+        <select name="provider_key">
+          <option>groq</option><option>openai</option><option>anthropic</option>
+          <option>google</option><option>nvidia</option><option>openrouter</option>
+        </select>
+        <label>API key</label><input name="api_key" type="password" placeholder="gsk_…" required autocomplete="off" />
+        <label>Base URL (optional)</label><input name="base_url" placeholder="leave empty for the official API" />
+        <button class="primary">Add provider</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>2. Agents</h2>
+      <p class="hint">Each agent = one model on one provider. Several agents can share a key.</p>
+      <ul class="list" id="agent-list"></ul>
+      <form id="agent-form">
+        <label>Name</label><input name="name" placeholder="Llama" required />
+        <label>Provider</label><select name="provider_id" id="agent-provider" required></select>
+        <label>Model</label><input name="model" list="groq-models" placeholder="openai/gpt-oss-120b" required />
+        <!-- Groq chat models as of Oct 2026 (console.groq.com/docs/models); preview ones may disappear at short notice -->
+        <datalist id="groq-models">
+          <option value="openai/gpt-oss-120b"></option>
+          <option value="openai/gpt-oss-20b"></option>
+          <option value="qwen/qwen3.8-27b">preview</option>
+          <option value="minimaxai/minimax-m2.7">preview</option>
+          <option value="meta-models/muse-spark-open">preview</option>
+        </datalist>
+        <div class="row">
+          <div><label>Temperature</label><input name="temperature" type="number" step="0.1" min="0" max="2" value="0.7" /></div>
+          <div><label>Max tokens</label><input name="max_tokens" type="number" min="1" value="4096" /></div>
+          <div><label>Max rounds</label><input name="max_rounds" type="number" min="1" value="3" /></div>
+        </div>
+        <button class="primary">Add agent</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>3. Groups</h2>
+      <p class="hint">A group chat: pick a prompt style and the agents in it.</p>
+      <ul class="list" id="group-admin-list"></ul>
+      <form id="group-form">
+        <label>Name</label><input name="name" placeholder="Trip planning" required />
+        <label>Prompt style</label>
+        <select name="system_prompt">
+          <option value="default">default</option><option value="debate">debate</option>
+          <option value="creative">creative</option><option value="technical">technical</option>
+        </select>
+        <label>Agents</label><div class="checks" id="group-agents"></div>
+        <button class="primary">Create group</button>
+      </form>
+    </div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const state = {
+  api: localStorage.getItem("oc_api") || "http://127.0.0.1:8000",
+  providers: [], agents: [], groups: [],
+  current: null,          // selected group id
+  members: {},            // group id -> [agent]
+  messages: {},           // group id -> Map(message id -> message), filled when a group is opened
+  running: new Set(),     // group ids with a run in progress
+  unread: new Set(),
+  ws: null,
+};
+
+// ---------- helpers ----------
+function toast(text, ok = false) {
+  const el = document.createElement("div");
+  el.className = "toast" + (ok ? " ok" : "");
+  el.textContent = text;
+  $("#toast").appendChild(el);
+  setTimeout(() => el.remove(), ok ? 2500 : 6000);
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(state.api + path, { headers: { "Content-Type": "application/json" }, ...options });
+  if (res.status === 204) return null;
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    const detail = body?.message || (body?.detail && body.detail.map?.((d) => `${d.loc?.at(-1)}: ${d.msg}`).join(", ")) || res.statusText;
+    throw new Error(detail);
+  }
+  return body;
+}
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) node.append(c);
+  return node;
+}
+
+const agentName = (id) => state.agents.find((a) => a.id === id)?.name || "Agent (deleted)";
+function colorFor(id) {
+  let h = 0;
+  for (const ch of id || "") h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${h} 55% 48%)`;
+}
+
+// ---------- data ----------
+async function loadAll() {
+  try {
+    [state.providers, state.agents, state.groups] = await Promise.all([api("/providers"), api("/agents"), api("/groups")]);
+  } catch (e) {
+    toast(`Can't reach the backend at ${state.api}: ${e.message}`);
+    return;
+  }
+  renderSetup();
+  renderGroups();
+}
+
+// ---------- setup tab ----------
+function deleteButton(path, label) {
+  return el("button", { class: "link", type: "button", onclick: async () => {
+    if (!confirm(`Delete ${label}?`)) return;
+    try { await api(path, { method: "DELETE" }); toast(`Deleted ${label}`, true); await loadAll(); }
+    catch (e) { toast(e.message); }
+  } }, "delete");
+}
+
+function renderSetup() {
+  const pl = $("#provider-list"); pl.replaceChildren();
+  if (!state.providers.length) pl.append(el("li", { class: "empty" }, "No providers yet."));
+  for (const p of state.providers) {
+    pl.append(el("li", {}, el("span", {}, p.name, " ", el("span", { class: "sub" }, p.provider_key)), deleteButton(`/providers/${p.id}`, p.name)));
+  }
+
+  const ap = $("#agent-provider"); ap.replaceChildren();
+  for (const p of state.providers) ap.append(el("option", { value: p.id }, `${p.name} (${p.provider_key})`));
+
+  const al = $("#agent-list"); al.replaceChildren();
+  if (!state.agents.length) al.append(el("li", { class: "empty" }, "No agents yet."));
+  for (const a of state.agents) {
+    const prov = state.providers.find((p) => p.id === a.provider_id);
+    al.append(el("li", {}, el("span", {}, a.name, " ", el("span", { class: "sub" }, `${a.model} · ${prov?.name || "?"}`)), deleteButton(`/agents/${a.id}`, a.name)));
+  }
+
+  const ga = $("#group-agents"); ga.replaceChildren();
+  if (!state.agents.length) ga.append(el("div", { class: "empty" }, "Create agents first."));
+  for (const a of state.agents) ga.append(el("label", {}, el("input", { type: "checkbox", value: a.id }), `${a.name} — ${a.model}`));
+
+  const gl = $("#group-admin-list"); gl.replaceChildren();
+  if (!state.groups.length) gl.append(el("li", { class: "empty" }, "No groups yet."));
+  for (const g of state.groups) gl.append(el("li", {}, el("span", {}, g.name), deleteButton(`/groups/${g.id}`, g.name)));
+}
+
+function formData(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+$("#provider-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = formData(e.target);
+  if (!data.base_url) delete data.base_url;
+  try { await api("/providers", { method: "POST", body: JSON.stringify(data) }); e.target.reset(); toast("Provider added", true); await loadAll(); }
+  catch (err) { toast(err.message); }
+});
+
+$("#agent-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const d = formData(e.target);
+  const body = { name: d.name, provider_id: d.provider_id, model: d.model.trim(),
+    temperature: Number(d.temperature), max_tokens: Number(d.max_tokens), max_rounds: Number(d.max_rounds) };
+  try { await api("/agents", { method: "POST", body: JSON.stringify(body) }); e.target.reset(); toast("Agent added", true); await loadAll(); }
+  catch (err) { toast(err.message); }
+});
+
+$("#group-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const d = formData(e.target);
+  const agent_ids = [...document.querySelectorAll("#group-agents input:checked")].map((i) => i.value);
+  if (!agent_ids.length) return toast("Pick at least one agent");
+  try {
+    const g = await api("/groups", { method: "POST", body: JSON.stringify({ name: d.name, system_prompt: d.system_prompt, agent_ids }) });
+    e.target.reset(); toast("Group created", true); await loadAll();
+    switchTab("chat"); openGroup(g.id);
+  } catch (err) { toast(err.message); }
+});
+
+// ---------- chat tab ----------
+function renderGroups() {
+  const list = $("#group-list"); list.replaceChildren();
+  if (!state.groups.length) list.append(el("div", { class: "empty", style: "padding: 0 14px" }, "No groups yet."));
+  for (const g of state.groups) {
+    const item = el("div", { class: "group-item" + (g.id === state.current ? " active" : ""), onclick: () => openGroup(g.id) },
+      el("span", { class: "name" }, g.name));
+    if (state.running.has(g.id)) item.append(el("span", { class: "busy" }, "replying…"));
+    if (state.unread.has(g.id)) item.append(el("span", { class: "badge" }));
+    list.append(item);
+  }
+}
+
+async function openGroup(id) {
+  state.current = id;
+  state.unread.delete(id);
+  renderGroups();
+  $("#convo-empty").style.display = "none";
+  $("#convo").style.display = "flex";
+  const g = state.groups.find((x) => x.id === id);
+  $("#convo-title").textContent = g?.name || "";
+  $("#convo-members").textContent = "";
+  try {
+    const [detail, history] = await Promise.all([api(`/groups/${id}`), api(`/chat/${id}`)]);
+    if (state.current !== id) return;
+    state.members[id] = detail.agents;
+    $("#convo-title").textContent = detail.name;
+    $("#convo-members").textContent = `${detail.agents.map((a) => a.name).join(", ")} · ${detail.system_prompt || "default"} prompt`;
+    const map = state.messages[id] || new Map();   // keep live events that arrived during the fetch
+    for (const m of history) map.set(m.id, m);
+    state.messages[id] = map;
+    renderMessages();
+  } catch (e) { toast(e.message); }
+  $("#composer-input").focus();
+}
+
+function renderMessages() {
+  const box = $("#messages");
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  box.replaceChildren();
+  const msgs = [...(state.messages[state.current]?.values() || [])].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  if (!msgs.length) box.append(el("div", { class: "placeholder" }, "No messages yet. Say hi 👋"));
+  for (const m of msgs) {
+    const isUser = m.sender_type === "user";
+    const name = isUser ? "You" : agentName(m.agent_id);
+    const time = new Date(m.created_at.endsWith("Z") || m.created_at.includes("+") ? m.created_at : m.created_at + "Z")
+      .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const who = el("div", { class: "who" });
+    if (!isUser) who.append(el("span", { class: "avatar", style: `background:${colorFor(m.agent_id)}` }, name[0]?.toUpperCase() || "?"));
+    who.append(`${name} · ${time}`);
+    box.append(el("div", { class: "msg " + (isUser ? "user" : "agent") }, who, el("div", { class: "bubble" }, m.content)));
+  }
+  if (nearBottom || msgs.length < 3) box.scrollTop = box.scrollHeight;
+  $("#convo-status").textContent = state.running.has(state.current) ? "Agents are replying…" : "";
+}
+
+$("#composer").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = $("#composer-input");
+  const content = input.value.trim();
+  if (!content || !state.current) return;
+  input.value = "";
+  const payload = { type: "send", group_id: state.current, content };
+  if (state.ws?.readyState === WebSocket.OPEN) state.ws.send(JSON.stringify(payload));
+  else api(`/chat/${state.current}`, { method: "POST", body: JSON.stringify({ content }) }).catch((err) => toast(err.message));
+});
+$("#composer-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#composer").requestSubmit(); }
+});
+
+// ---------- websocket: one connection for every group ----------
+function setConn(on, text) {
+  $("#conn-dot").className = "dot " + (on ? "on" : "off");
+  $("#conn-text").textContent = text;
+}
+
+function connect() {
+  const url = state.api.replace(/^http/, "ws") + "/realtime/ws";
+  const ws = new WebSocket(url);
+  state.ws = ws;
+  ws.onopen = () => {
+    setConn(true, "live");
+    if (state.current) openGroup(state.current);   // catch up on anything missed while disconnected
+  };
+  ws.onclose = () => {
+    if (state.ws !== ws) return;                   // replaced by a newer connection
+    setConn(false, "reconnecting…");
+    setTimeout(connect, 2000);
+  };
+  ws.onmessage = (e) => handleEvent(JSON.parse(e.data));
+}
+
+function handleEvent(ev) {
+  const gid = ev.group_id;
+  if (ev.type === "user_message" || ev.type === "agent_message") {
+    if (ev.type === "user_message") state.running.add(gid);
+    if (state.messages[gid]) state.messages[gid].set(ev.message.id, ev.message);
+    if (gid !== state.current && ev.type === "agent_message") state.unread.add(gid);
+  } else if (ev.type === "run_done") {
+    state.running.delete(gid);
+  } else if (ev.type === "error") {
+    if (gid) state.running.delete(gid);
+    toast(`${ev.code}: ${ev.message}`);
+  }
+  renderGroups();
+  if (gid === state.current) renderMessages();
+}
+
+// ---------- boot ----------
+function switchTab(name) {
+  document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === name));
+}
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+
+$("#api-url").value = state.api;
+$("#api-url").addEventListener("change", (e) => {
+  state.api = e.target.value.replace(/\/+$/, "");
+  localStorage.setItem("oc_api", state.api);
+  const old = state.ws; state.ws = null; old?.close();
+  loadAll(); connect();
+});
+
+loadAll();
+connect();
+</script>
+</body>
+</html>
