@@ -1,31 +1,75 @@
-# opencircle_frontend
+# React + TypeScript + Vite
 
-A minimal test UI for the OpenCircle backend: one `index.html`, no build step.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Run
+Currently, two official plugins are available:
 
-1. Start the backend (from `opencircle_backend`):
-   ```bash
-   uv run dev
-   ```
-2. Serve this folder on port 5173 (the port the backend allows via CORS):
-   ```bash
-   python -m http.server 5173
-   ```
-3. Open http://localhost:5173
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Use
+## React Compiler
 
-1. **Setup → Providers**: add your Groq key (`provider: groq`). Add more keys as separate providers if you want.
-2. **Setup → Agents**: one agent per model, e.g. `GPT-OSS` → `openai/gpt-oss-120b`, `Qwen` → `qwen/qwen3.8-27b`.
-   The model field suggests Groq models (as of Oct 2026) but accepts any id. Groq retires models often; if an
-   agent never replies, check https://console.groq.com/docs/models and https://console.groq.com/docs/deprecations.
-3. **Setup → Groups**: pick a prompt style and tick the agents.
-4. **Chat**: open the group and send a message. Replies appear as each agent finishes.
-   You can send again while agents are still replying: it joins the same conversation.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-The top-right field is the backend URL (default `http://127.0.0.1:8000`). Using a different frontend port?
-Set `CORS_ORIGINS=http://localhost:<port>` in the backend's `.env`.
+## Expanding the ESLint configuration
 
-Silent turns and agent errors are stored in the DB but not shown here. If an agent stays quiet every time,
-its model id or key is probably wrong.
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+
+```
+
+You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+
+```
