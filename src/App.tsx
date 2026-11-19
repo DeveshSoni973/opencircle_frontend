@@ -1,7 +1,7 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import HomePage from "./pages/Homepage";
+import HomePage from "./pages/HomePage";
 import SettingsPage from "./pages/SettingsPage";
 import ChatPage from "./pages/ChatPage";
 import EmptyState from "./pages/EmptyState";
