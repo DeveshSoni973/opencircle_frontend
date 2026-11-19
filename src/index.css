@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/* ========================================
+   1. Primitives (raw values, never themed)
+======================================== */
+:root {
+  --neutral-50: oklch(0.98 0 0);
+  --neutral-100: oklch(0.95 0 0);
+  --neutral-200: oklch(0.88 0 0);
+  --neutral-400: oklch(0.65 0 0);
+  --neutral-500: oklch(0.52 0 0);
+  --neutral-600: oklch(0.40 0 0);
+  --neutral-700: oklch(0.28 0 0);
+  --neutral-800: oklch(0.22 0 0);
+  --neutral-900: oklch(0.16 0 0);
+  --neutral-950: oklch(0.12 0 0);
+
+  --green-100: oklch(0.93 0.04 150);
+  --green-500: oklch(0.65 0.16 155);
+  --green-600: oklch(0.55 0.15 155);
+  --green-700: oklch(0.48 0.14 155);
+  --green-900: oklch(0.28 0.05 155);
+
+  --white: oklch(1 0 0);
+}
+
+/* ========================================
+   2. Semantic tokens: light (default)
+======================================== */
+:root {
+  color-scheme: light;
+
+  --bg-app: var(--neutral-50);
+  --bg-sidebar: var(--neutral-100);
+  --bg-chat: var(--neutral-50);
+
+  --message-outgoing: var(--green-100);
+  --message-incoming: var(--white);
+
+  --text-primary: var(--neutral-950);
+  --text-secondary: var(--neutral-600);
+  --text-muted: var(--neutral-500);
+
+  --border: var(--neutral-200);
+
+  --accent: var(--green-600);
+  --accent-hover: var(--green-700);
+  --accent-foreground: var(--white);
+}
+
+/* ========================================
+   3. Semantic tokens: dark
+======================================== */
+.dark {
+  color-scheme: dark;
+
+  --bg-app: var(--neutral-950);
+  --bg-sidebar: var(--neutral-900);
+  --bg-chat: var(--neutral-950);
+
+  --message-outgoing: var(--green-900);
+  --message-incoming: var(--neutral-800);
+
+  --text-primary: var(--neutral-50);
+  --text-secondary: var(--neutral-200);
+  --text-muted: var(--neutral-400);
+
+  --border: var(--neutral-800);
+
+  --accent: var(--green-500);
+  --accent-hover: var(--green-600);
+  --accent-foreground: var(--neutral-950);
+}
+
+/* ========================================
+   4. Register as Tailwind utilities
+======================================== */
+@theme inline {
+  --color-bg-app: var(--bg-app);
+  --color-bg-sidebar: var(--bg-sidebar);
+  --color-bg-chat: var(--bg-chat);
+  --color-message-outgoing: var(--message-outgoing);
+  --color-message-incoming: var(--message-incoming);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+}
+
+/* ========================================
+   5. Base
+======================================== */
+body {
+  background: var(--bg-app);
+  color: var(--text-primary);
+}
