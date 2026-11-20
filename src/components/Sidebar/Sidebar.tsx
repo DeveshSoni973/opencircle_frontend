@@ -4,10 +4,10 @@ import SidebarChat from "./SidebarChat";
 
 export default function Sidebar() {
   const conversations = [
-    { id: 1, title: "Understanding Tailwind Flexbox" },
-    { id: 2, title: "Token Strategies" },
-    { id: 3, title: "FastAPI CRUD Architecture" },
-    { id: 4, title: "Learning React Router" },
+    { id: 1, title: "ChatGpt" },
+    { id: 2, title: "Claude" },
+    { id: 3, title: "Gemini" },
+    { id: 4, title: "Grok" },
   ];
 
   return (
@@ -21,7 +21,7 @@ export default function Sidebar() {
 
         <div className="flex flex-col gap-1">
           {conversations.map((chat) => (
-            <SidebarChat key={chat.id} title={chat.title} />
+            <SidebarChat id={chat.id} title={chat.title} />
           ))}
         </div>
       </div>
