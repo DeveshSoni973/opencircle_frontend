@@ -33,6 +33,7 @@
   --bg-app: var(--neutral-50);
   --bg-sidebar: var(--neutral-100);
   --bg-chat: var(--neutral-50);
+  --bg-secondary: var(--neutral-200);
 
   --message-outgoing: var(--green-100);
   --message-incoming: var(--white);
@@ -57,6 +58,7 @@
   --bg-app: var(--neutral-950);
   --bg-sidebar: var(--neutral-900);
   --bg-chat: var(--neutral-950);
+  --bg-secondary: var(--neutral-800);
 
   --message-outgoing: var(--green-900);
   --message-incoming: var(--neutral-800);
@@ -79,6 +81,7 @@
   --color-bg-app: var(--bg-app);
   --color-bg-sidebar: var(--bg-sidebar);
   --color-bg-chat: var(--bg-chat);
+  --color-bg-secondary: var(--bg-secondary);
   --color-message-outgoing: var(--message-outgoing);
   --color-message-incoming: var(--message-incoming);
   --color-text-primary: var(--text-primary);
